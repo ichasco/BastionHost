@@ -1,0 +1,64 @@
+---
+  version: '3.7'
+
+  services:
+    ssh-server:
+      build:
+        context: ./ssh-server
+        dockerfile: Dockerfile
+      hostname: ssh-bastion
+      image: ssh-server
+      restart: on-failure
+      container_name: ssh-server
+      environment:
+        - SSH_PORT=${SSH_PORT:-222}
+        - SSH_USER=${SSH_USER:-bastion}
+        - SSH_CLIENT_ALIVE_INTERVAL=${SSH_CLIENT_ALIVE_INTERVAL:-300}
+        - SSH_CLIENT_ALIVE_COUNT_MAX=${SSH_CLIENT_ALIVE_COUNT_MAX:-2}
+        - SSH_MAX_AUTH_TRIES=${SSH_MAX_AUTH_TRIES:-3}
+        - SSH_RECORD_SESSION=${SSH_RECORD_SESSION:-false}
+        - VAULT_ENABLE=${VAULT_ENABLE:-false}
+        - VAULT_HOST=${VAULT_HOST}
+        - VAULT_SSH_PATH=${VAULT_SSH_PATH}
+        - TZ=${TZ:-Europe/Madrid}
+      network_mode: host
+      volumes: 
+        - ssh_logs:/var/log/ssh
+      deploy:
+        resources:
+          limits:
+            cpus: '0.2'
+            memory: '500m'
+
+    fail2ban:
+      build:
+        context: ./fail2ban
+        dockerfile: Dockerfile
+      image: fail2ban
+      restart: on-failure
+      container_name: fail2ban
+      hostname: fail2ban
+      environment:
+        - SSH_PORT=${SSH_PORT:-222}
+        - FAIL2BAN_LOGLEVEL=${FAIL2BAN_LOGLEVEL:-INFO}
+        - FAIL2BAN_SSH_MAXRETRY=${FAIL2BAN_SSH_MAXRETRY:-3}
+        - FAIL2BAN_SSH_BANTIME=${FAIL2BAN_SSH_BANTIME:-86400}
+        - TZ=${TZ:-Europe/Madrid}
+      volumes:
+        - data:/var/lib/fail2ban
+        - ssh_logs:/var/log:ro
+      network_mode: host
+      cap_add:
+        - NET_ADMIN
+        - NET_RAW
+      depends_on:
+        - ssh-server
+      deploy:
+        resources:
+          limits:
+            cpus: '0.2'
+            memory: '500m'
+
+  volumes:
+    data:
+    ssh_logs:
