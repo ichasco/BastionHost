@@ -144,11 +144,11 @@ Status
 ```
 docker exec -it fail2ban fail2ban-client status sshd
 ```
-Manualy Block IP
+Manually Block IP
 ```
 docker exec -it fail2ban fail2ban-client set sshd banip <IP>
 ```
-Manualy Unblock IP
+Manually Unblock IP
 ```
 docker exec -it fail2ban fail2ban-client set sshd unbanip <IP>
 ```
@@ -176,7 +176,7 @@ And then restart Docker
 systemctl restart docker
 ```
 
-### Manualy unban IP from iptables
+### Manually unban IP from iptables
 
 ```
 sudo iptables -L f2b-sshd --line-numbers
